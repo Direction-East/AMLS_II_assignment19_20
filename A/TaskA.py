@@ -14,7 +14,6 @@ import os
 
 embed_dim = 128
 lstm_out = 196
-batch_size = 32
 
 def load_dataset_A(filepath):
     data = pd.read_table(filepath,header=None, names=['iid','sentiment','text','timestamp'])
@@ -51,13 +50,13 @@ def A(timestep, max_features):
     print(model.summary())
     return model
 
-def train_A(model, X_train, Y_train, batch_size):
-    history = model.fit(X_train, Y_train, epochs = 7, batch_size=batch_size, verbose = 2)
-    print(history.history.keys())
-    return history.history['acc'][-1]
+def train_A(model, X_train, Y_train, epochs, batch_size):
+    history = model.fit(X_train, Y_train, epochs=epochs, batch_size=batch_size, verbose = 2)
+    # print(history.history.keys())
+    return history.history['accuracy'][-1]
 
 def test_A(model, X_test, Y_test, batch_size):
-    score,acc = model.evaluate(X_test, Y_test, verbose = 2, batch_size = batch_size)
-    print("score: %.2f" % (score))
-    print("acc: %.2f" % (acc))
+    score,acc = model.evaluate(X_test, Y_test, verbose = 2, batch_size=batch_size)
+    # print("score: %.2f" % (score))
+    # print("acc: %.2f" % (acc))
     return score, acc

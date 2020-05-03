@@ -17,7 +17,7 @@ from B.TaskB import *
 # ======================================================================================================================
 # Data preprocessing
 
-epochs_A = 7
+epochs_A = 1
 batch_size_A = 32
 max_features_A = 2000
 
@@ -27,7 +27,7 @@ data_A = load_dataset_A(taskA_dev_data_filepath)
 X_train_A, X_test_A, Y_train_A, Y_test_A = data_preprocessing_A(data_A, max_features_A)
 
 
-epochs_B = 7
+epochs_B = 1
 batch_size_B = 32
 max_features_B = 2000
 
@@ -40,7 +40,7 @@ X_train_B, X_test_B, X_left_train_B, X_left_test_B, X_right_train_B, X_right_tes
 # ======================================================================================================================
 # Task A
 model_A = A(X_train_A.shape[1], max_features_A)
-acc_A_train = train_A(model_A, X_train_A, Y_train_A, batch_size_A)
+acc_A_train = train_A(model_A, X_train_A, Y_train_A, epochs_A, batch_size_A)
 score_A_test, acc_A_test = test_A(model_A, X_test_A, Y_test_A, batch_size_A)
 
 # model_A = A(args...)                 # Build model object.
@@ -53,7 +53,7 @@ score_A_test, acc_A_test = test_A(model_A, X_test_A, Y_test_A, batch_size_A)
 # Task B
 model_B = B(X_train_B.shape[1], max_features_B)
 acc_B_train = train_B(model_B, X_left_train_B, X_train_B, X_right_train_B, Y_train_B, epochs_B, batch_size_B)
-score_B_test, acc_B_test = test_B(model, X_left_test, X_test, X_right_test, Y_test, batch_size_B)
+score_B_test, acc_B_test = test_B(model_B, X_left_test_B, X_test_B, X_right_test_B, Y_test_B, batch_size_B)
 # model_B = B(args...)
 # acc_B_train = model_B.train(args...)
 # acc_B_test = model_B.test(args...)

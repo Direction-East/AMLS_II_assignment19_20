@@ -5,7 +5,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.models import Sequential, Model
-from keras.layers import Dense, Embedding, LSTM, Bidirectional, Input, Multiply
+from keras.layers import Dense, Embedding, LSTM, Bidirectional, Input, Multiply, Dropout, concatenate
 from sklearn.model_selection import train_test_split
 from keras.utils.np_utils import to_categorical
 import re
@@ -48,9 +48,9 @@ def data_preprocessing_B(data, max_features):
     X_right = tokenizer.texts_to_sequences(data['right_text'].values)
     X_right = pad_sequences(X_right,maxlen=X.shape[1])
 
-    X_left = X_left.reshape(X_left.shape[0],X_left.shape[1],1)
-    X_right = X_right.reshape(X_right.shape[0],X_right.shape[1],1)
-    X = X.reshape(X.shape[0],X.shape[1],1)
+    # X_left = X_left.reshape(X_left.shape[0],X_left.shape[1],1)
+    # X_right = X_right.reshape(X_right.shape[0],X_right.shape[1],1)
+    # X = X.reshape(X.shape[0],X.shape[1],1)
     Y = pd.get_dummies(data['sentiment']).values
     X_train, X_test,X_left_train, X_left_test, X_right_train, X_right_test, Y_train, Y_test = train_test_split(X, X_left, X_right, Y, test_size = 0.33, random_state = 42)
     # print(X_left_train.shape,Y_train.shape)
@@ -62,7 +62,7 @@ def B(timestep, max_features):
     # model = Sequential()
     # model.add(Embedding(max_features, embed_dim,input_length = X.shape[1]))
 
-    left_input = Input(shape=(timestep,1,))
+    left_input = Input(shape=(timestep,))
     left_emb = Embedding(max_features, embed_dim,input_length = timestep)(left_input)
     left_dropout = Dropout(0.3)(left_emb)
     # left_attn = AttentionDecoder(lstm_out, timestep, name='left_attn')(left_emb)
@@ -70,7 +70,7 @@ def B(timestep, max_features):
     attention_mul_left =  Multiply()([attention_probs_left, left_input])
 
 
-    right_input = Input(shape=(timestep,1,))
+    right_input = Input(shape=(timestep,))
     right_emb = Embedding(max_features, embed_dim,input_length = timestep)(right_input)
     right_dropout = Dropout(0.3)(left_emb)
     # right_attn = AttentionDecoder(lstm_out, timestep, name='right_attn')(right_emb)
@@ -78,7 +78,7 @@ def B(timestep, max_features):
     attention_mul_right =  Multiply()([attention_probs_right, right_input])
 
 
-    full_sent_input = Input(shape=(timestep,1,))
+    full_sent_input = Input(shape=(timestep,))
     full_sent_emb = Embedding(max_features, embed_dim,input_length = timestep)(full_sent_input)
     full_sent_dropout = Dropout(0.3)(full_sent_emb)
     # full_sent_attn = AttentionDecoder(lstm_out, X.shape[1], name='full_sent_attn')(full_sent_emb)
@@ -99,10 +99,10 @@ def B(timestep, max_features):
 
 def train_B(model, X_left_train, X_train, X_right_train, Y_train, epochs, batch_size):
     history = model.fit([X_left_train, X_train, X_right_train], Y_train, epochs=epochs, batch_size=batch_size, verbose = 2)
-    return history.history['acc'][-1]
+    return history.history['accuracy'][-1]
 
 def test_B(model, X_left_test, X_test, X_right_test, Y_test, batch_size):
-    score,acc = model.evaluate([X_left_test, X_test, X_right_test], Y_test, verbose = 2, batch_size = batch_size)
-    print("score: %.2f" % (score))
-    print("acc: %.2f" % (acc))
+    score,acc = model.evaluate([X_left_test, X_test, X_right_test], Y_test, verbose = 2, batch_size=batch_size)
+    # print("score: %.2f" % (score))
+    # print("acc: %.2f" % (acc))
     return score, acc
