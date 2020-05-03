@@ -1,43 +1,71 @@
 import numpy as np
 import pandas as pd
 
-from sklearn.feature_extraction.text import CountVectorizer
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
-from keras.models import Sequential, Model
+from keras.models import Model
 from keras.layers import Dense, Embedding, LSTM, Bidirectional, Input, Multiply
 from sklearn.model_selection import train_test_split
-from keras.utils.np_utils import to_categorical
 import re
 import os
 
-
+# some variable definition to be used in later stage
+# these could be tuned for better performance
 embed_dim = 128
 lstm_out = 196
 
 def load_dataset_A(filepath):
+    ''' load the data for task A
+    # Arguments
+        filepath: the data directory for task A
+    # Returns
+        data in pandas dataframe format
+    '''
     data = pd.read_table(filepath,header=None, names=['iid','sentiment','text','timestamp'])
     return data
 
 def data_preprocessing_A(data, max_features):
+    ''' preprocess the data for task A
+    # Arguments
+        data: data obtained for task A
+        max_features: maximum feature number limitation for the tokenizer
+    # Returns
+        X_train: input data for training
+        X_test: input data for testing
+        Y_train: output data for training
+        Y_test: output data for testing
+    '''
+    # only take the columns that are useful
     data = data[['text','sentiment']]
-    data['text'] = data['text'].apply(lambda x: x.lower())
-    data['text'] = data['text'].apply((lambda x: re.sub('\s@[a-z_0-9]*\s',' ',x)))
-    data['text'] = data['text'].apply((lambda x: re.sub('[~#-,!:;()\?""%&=\$]','',x)))
-    data['text'] = data['text'].apply((lambda x: re.sub('\shttp[s]?://*$','',x)))
 
-    # max_features = 2000
-    tokenizer = Tokenizer(nb_words=max_features, split=' ')
+    # filter out useless words
+    data['text'] = data['text'].apply(lambda x: x.lower()) # use lower case words only
+    data['text'] = data['text'].apply((lambda x: re.sub('[\s]?@[a-z_0-9]*\s',' ',x))) # filter out @people words
+    data['text'] = data['text'].apply((lambda x: re.sub('[\s]?#[a-z_0-9]*\s',' ',x))) # filter out #topic words
+    data['text'] = data['text'].apply((lambda x: re.sub('\shttp[s]?://[.a-z0-9/]*','',x))) # filter out URL links
+    data['text'] = data['text'].apply((lambda x: re.sub('[~#-,!:;()\?""%&=\$]','',x))) # filter out special symbols in sentences
+    data['text'] = data['text'].apply((lambda x: x.rstrip().lstrip()))
+
+    # tokenizer the words
+    tokenizer = Tokenizer(nb_words=max_features, split=' ') # max_features = 2000
     tokenizer.fit_on_texts(data['text'].values)
     X = tokenizer.texts_to_sequences(data['text'].values)
-    X = pad_sequences(X)
+    X = pad_sequences(X) # pad short sentences with 0 so the dimensions are consistent
 
+    # change the sentiment labels into numerical labels
     Y = pd.get_dummies(data['sentiment']).values
     X_train, X_test, Y_train, Y_test = train_test_split(X,Y, test_size = 0.33, random_state = 42)
 
     return X_train, X_test, Y_train, Y_test
 
 def A(timestep, max_features):
+    ''' define the model used for task A
+    # Arguments
+        timestep: number of words in the sentence
+        max_features: maximum feature number limitation from the tokenizer
+    # Returns
+        model: the model for task A
+    '''
     input_1 = Input(shape=(timestep,))
     input_emb = Embedding(max_features, embed_dim,input_length = timestep)(input_1)
     # attention_probs = Dense(X.shape[1], activation='softmax', name='attention_vec')(input_emb)
@@ -51,11 +79,30 @@ def A(timestep, max_features):
     return model
 
 def train_A(model, X_train, Y_train, epochs, batch_size):
+    ''' Train the model for task A
+    # Arguments
+        model: the model for task A
+        X_train: input data for training
+        Y_train: output data for training
+        epochs: number of times going through the dataset
+        batch_size: number of samples every batch
+    # Returns
+        training accuracy
+    '''
     history = model.fit(X_train, Y_train, epochs=epochs, batch_size=batch_size, verbose = 2)
     # print(history.history.keys())
     return history.history['accuracy'][-1]
 
 def test_A(model, X_test, Y_test, batch_size):
+    ''' Test the model of task A
+    # Arguments
+        model: the model for task A
+        X_test: input data for testing
+        Y_test: output data for testing
+        batch_size: number of samples every batch
+    # Returns
+        testing accuracy
+    '''
     score,acc = model.evaluate(X_test, Y_test, verbose = 2, batch_size=batch_size)
     # print("score: %.2f" % (score))
     # print("acc: %.2f" % (acc))
