@@ -17,7 +17,7 @@ from B.TaskB import *
 # ======================================================================================================================
 # Data preprocessing
 
-epochs_A = 1
+epochs_A = 7
 batch_size_A = 32
 max_features_A = 2000
 
@@ -27,7 +27,7 @@ data_A = load_dataset_A(taskA_dev_data_filepath)
 X_train_A, X_test_A, Y_train_A, Y_test_A = data_preprocessing_A(data_A, max_features_A)
 
 
-epochs_B = 1
+epochs_B = 7
 batch_size_B = 32
 max_features_B = 2000
 
