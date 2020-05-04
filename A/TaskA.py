@@ -7,7 +7,6 @@ from keras.models import Model
 from keras.layers import Dense, Embedding, LSTM, Bidirectional, Input, Multiply
 from sklearn.model_selection import train_test_split
 import re
-import os
 
 # some variable definition to be used in later stage
 # these could be tuned for better performance
@@ -93,7 +92,7 @@ def train_A(model, X_train, Y_train, epochs, batch_size):
     # print(history.history.keys())
     return history.history['accuracy'][-1]
 
-def test_A(model, X_test, Y_test, batch_size):
+def test_A(model, X_test, Y_test, batch_size, validation_size):
     ''' Test the model of task A
     # Arguments
         model: the model for task A
@@ -101,9 +100,15 @@ def test_A(model, X_test, Y_test, batch_size):
         Y_test: output data for testing
         batch_size: number of samples every batch
     # Returns
+        validation accuracy
         testing accuracy
     '''
-    score,acc = model.evaluate(X_test, Y_test, verbose = 2, batch_size=batch_size)
-    # print("score: %.2f" % (score))
-    # print("acc: %.2f" % (acc))
-    return score, acc
+    X_validate = X_test[-validation_size:]
+    Y_validate = Y_test[-validation_size:]
+    X_test = X_test[:-validation_size]
+    Y_test = Y_test[:-validation_size]
+    score_valid, acc_valid = model.evaluate(X_validate , Y_validate , verbose = 2, batch_size=batch_size)
+    score_test, acc_test = model.evaluate(X_test, Y_test, verbose = 2, batch_size=batch_size)
+    print("acc_valid: %.2f" % (acc_valid))
+    print("acc_test: %.2f" % (acc_test))
+    return acc_valid, acc_test

@@ -7,7 +7,6 @@ from keras.models import Model
 from keras.layers import Dense, Embedding, LSTM, Bidirectional, Input, Multiply, Dropout, concatenate
 from sklearn.model_selection import train_test_split
 import re
-import os
 
 # some variable definition to be used in later stage
 # these could be tuned for better performance
@@ -120,7 +119,7 @@ def B(timestep, max_features):
     # concatenate the three networks to get the Contextualized attention
     conc = concatenate([attention_mul_left, attention_mul_full_sent, attention_mul_right])
 
-    lstm = LSTM(lstm_out, recurrent_dropout=0.2, dropout=0.2)(conc)
+    lstm = Bidirectional(LSTM(lstm_out, recurrent_dropout=0.2, dropout=0.2))(conc)
     result = Dense(2,activation='softmax')(lstm)
     model = Model(inputs=[left_input, full_sent_input, right_input], outputs=result)
     model.compile(loss = 'categorical_crossentropy', optimizer='adam',metrics = ['accuracy'])
@@ -142,7 +141,7 @@ def train_B(model, X_left_train, X_train, X_right_train, Y_train, epochs, batch_
     history = model.fit([X_left_train, X_train, X_right_train], Y_train, epochs=epochs, batch_size=batch_size, verbose = 2)
     return history.history['accuracy'][-1]
 
-def test_B(model, X_left_test, X_test, X_right_test, Y_test, batch_size):
+def test_B(model, X_left_test, X_test, X_right_test, Y_test, batch_size, validation_size):
     ''' Test the model of task B
     # Arguments
         model: the model for task B
@@ -150,10 +149,23 @@ def test_B(model, X_left_test, X_test, X_right_test, Y_test, batch_size):
         Y_test: output data for testing
         batch_size: number of samples every batch
     # Returns
+        validation accuracy
         testing accuracy
     '''
 
-    score,acc = model.evaluate([X_left_test, X_test, X_right_test], Y_test, verbose = 2, batch_size=batch_size)
-    # print("score: %.2f" % (score))
-    # print("acc: %.2f" % (acc))
-    return score, acc
+    X_validation = X_test[-validation_size:]
+    X_left_validation = X_left_test[-validation_size:]
+    X_right_validation = X_right_test[-validation_size:]
+    Y_validation = Y_test[-validation_size:]
+
+    score_valid, acc_valid = model.evaluate([X_left_validation, X_validation, X_right_validation], Y_validation, verbose = 2, batch_size=batch_size)
+
+    X_test = X_test[:-validation_size]
+    X_left_test = X_left_test[:-validation_size]
+    X_right_test = X_right_test[:-validation_size]
+    Y_test = Y_test[:-validation_size]
+
+    score_test, acc_test = model.evaluate([X_left_test, X_test, X_right_test], Y_test, verbose = 2, batch_size=batch_size)
+    print("acc_valid: %.2f" % (acc_valid))
+    print("acc_test: %.2f" % (acc_test))
+    return acc_valid, acc_test
