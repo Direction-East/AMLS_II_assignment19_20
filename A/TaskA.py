@@ -4,7 +4,7 @@ import pandas as pd
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 from keras.models import Model
-from keras.layers import Dense, Embedding, LSTM, Bidirectional, Input, Multiply
+from keras.layers import Dense, Embedding, LSTM, Bidirectional, Input, Multiply, Dropout
 from sklearn.model_selection import train_test_split
 import re
 
@@ -67,10 +67,11 @@ def A(timestep, max_features):
     '''
     input_1 = Input(shape=(timestep,))
     input_emb = Embedding(max_features, embed_dim,input_length = timestep)(input_1)
+    emb_dropout = Dropout(0.3)(input_emb)
     # attention_probs = Dense(X.shape[1], activation='softmax', name='attention_vec')(input_emb)
     # attention_mul =  Multiply()([attention_probs, input_1])
     # lstm = Bidirectional(LSTM(lstm_out, recurrent_dropout=0.2, dropout=0.2))(attention_mul)
-    lstm = Bidirectional(LSTM(lstm_out, recurrent_dropout=0.2, dropout=0.2))(input_emb)
+    lstm = Bidirectional(LSTM(lstm_out, recurrent_dropout=0.2, dropout=0.2))(emb_dropout)
     result = Dense(3,activation='softmax')(lstm)
     model = Model(inputs=input_1, outputs=result)
     model.compile(loss = 'categorical_crossentropy', optimizer='adam',metrics = ['accuracy'])

@@ -119,7 +119,7 @@ def B(timestep, max_features):
     # concatenate the three networks to get the Contextualized attention
     conc = concatenate([attention_mul_left, attention_mul_full_sent, attention_mul_right])
 
-    lstm = Bidirectional(LSTM(lstm_out, recurrent_dropout=0.2, dropout=0.2))(conc)
+    lstm = LSTM(lstm_out, recurrent_dropout=0.2, dropout=0.2)(conc)
     result = Dense(2,activation='softmax')(lstm)
     model = Model(inputs=[left_input, full_sent_input, right_input], outputs=result)
     model.compile(loss = 'categorical_crossentropy', optimizer='adam',metrics = ['accuracy'])
